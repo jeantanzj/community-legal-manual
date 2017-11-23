@@ -3,7 +3,7 @@ theme: minima
 plugins:
   - jekyll-seo-tag
   - jekyll-coffeescript
-exclude: ["*.tmp","*.sh"]
+exclude: ['*.tmp','*.sh','pre-push']
 section_order:
   - Community Legal Clinic Manual
   - Clinic Management
