@@ -3,6 +3,7 @@ theme: minima
 plugins:
   - jekyll-seo-tag
   - jekyll-coffeescript
+exclude: ["*.tmp","*.sh"]
 section_order:
   - Community Legal Clinic Manual
   - Clinic Management
@@ -19,3 +20,5 @@ section_order:
   - Military Law
   - Alternative Dispute Resolution
   - The Traffic Court
+bonsai_url: https://first-cluster-5446942761.ap-southeast-2.bonsaisearch.net/probono/md/_search?pretty
+bonsai_credential: 4et5fzvqdw:5as4dekv3t

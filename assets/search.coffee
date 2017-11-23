@@ -246,13 +246,14 @@ translateLunrResults = (lunrResults) ->
 renderSearchResults = (searchResults) ->
   container = document.getElementsByClassName('search-results')[0]
   container.innerHTML = ''
-  searchResults.forEach (result) ->
+  searchResults.hits.hits.forEach (result) ->
     element = document.createElement('a')
     element.classList.add 'nav-link'
-    element.setAttribute 'href', result.url
-    element.innerHTML = result.title
+    element.setAttribute 'href', result._source.url
+    element.innerHTML = result._source.title
     description = document.createElement('p')
-    description.innerHTML = result.description
+    description.innerHTML = "..." + result.highlight.content.join "..."
+    description.innerHTML += "..."
     element.appendChild description
     container.appendChild element
     return
@@ -273,27 +274,38 @@ debounce = (func, wait, immediate) ->
     if callImmediately
       func.apply(context, args)
 
+createEsQuery = (queryStr) ->
+  highlight = {}
+  highlight.require_field_match = false
+  highlight.fields = {}
+  highlight.fields.content = {"fragment_size" : 120, "number_of_fragments" : 1, "pre_tags" : ["<strong>"], "post_tags" : ["</strong>"] }
+
+  query = {}
+  query.simple_query_string= {}
+  query.simple_query_string.query = queryStr+"*"
+  query.simple_query_string.fields = ["title","content"]
+
+  {"query" : query, "highlight" : highlight}
+
 # Call the API 
 esSearch = (query) -> 
-  console.log 'Query is: ' , query
+  console.log 'Executing debounced query: ' , query
   req=new XMLHttpRequest()
   req.addEventListener 'readystatechange', -> 
     if req.readyState is 4 # ReadyState Complete  
       successResultCodes=[200,304]
       if req.status in successResultCodes
-        console.log 'data message: ', req.responseText
+        result = JSON.parse req.responseText
+        renderSearchResults result
       else
-        console.log 'Error loading data...'
+        console.log 'Error retrieving search results ...'
 
-  req.open 'GET','https://jsonplaceholder.typicode.com/posts/1',true
-  req.send()
-  arr = ['an element']
-  return arr.map () ->
-    return {
-      title: 'some title' 
-      description: 'some description'
-      url: '/advance-medical-directive.html'
-    }
+  auth = btoa {{ site.bonsai_credential | jsonify }}
+  esQuery = createEsQuery query
+  req.open 'POST', {{ site.bonsai_url |  jsonify }}, true
+  req.setRequestHeader 'Content-Type', 'application/json'
+  req.setRequestHeader 'Authorization', 'Basic ' + auth
+  req.send JSON.stringify esQuery
   
 # Enable the searchbox once the index is built
 searchIndexPromise.then () ->
@@ -314,8 +326,7 @@ searchIndexPromise.then () ->
       query = searchBoxElement.value
       if query.length > 0
         results = esSearch(query) 
-        renderSearchResults results
-    300)
+    200)
 
 
 
