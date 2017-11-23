@@ -191,13 +191,7 @@ serializableSiteSections = Object.values(sectionIndex).map (section) ->
   delete serializableSection.subsections
   return serializableSection
 searchIndexPromise = new Promise (resolve, reject) ->
-  worker = new Worker("{{ '/assets/worker.js' | relative_url }}")
-  worker.onmessage = (event) ->
-    worker.terminate()
-    resolve lunr.Index.load event.data
-  worker.onerror = (error) ->
-    Promise.reject(error)
-  worker.postMessage serializableSiteSections
+  resolve 'just resolve it for now'
 
 # Search
 # =============================================================================
@@ -264,9 +258,45 @@ renderSearchResults = (searchResults) ->
     return
   return
 
+debounce = (func, wait, immediate) ->
+  timeout = null
+  (args...) ->
+    context = this
+    later = () ->
+      timeout = null
+      if not immediate
+        func.apply(context, args)
 
+    callImmediately = immediate && not timeout
+    clearTimeout timeout
+    timeout = setTimeout later, wait
+    if callImmediately
+      func.apply(context, args)
+
+# Call the API 
+esSearch = (query) -> 
+  console.log 'Query is: ' , query
+  req=new XMLHttpRequest()
+  req.addEventListener 'readystatechange', -> 
+    if req.readyState is 4 # ReadyState Complete  
+      successResultCodes=[200,304]
+      if req.status in successResultCodes
+        console.log 'data message: ', req.responseText
+      else
+        console.log 'Error loading data...'
+
+  req.open 'GET','https://jsonplaceholder.typicode.com/posts/1',true
+  req.send()
+  arr = ['an element']
+  return arr.map () ->
+    return {
+      title: 'some title' 
+      description: 'some description'
+      url: '/advance-medical-directive.html'
+    }
+  
 # Enable the searchbox once the index is built
-searchIndexPromise.then (searchIndex) ->
+searchIndexPromise.then () ->
   searchBoxElement.removeAttribute "disabled"
   searchBoxElement.setAttribute "placeholder", "Type here to search..."
   searchBoxElement.addEventListener 'input', (event) ->
@@ -279,9 +309,15 @@ searchIndexPromise.then (searchIndex) ->
     else
       toc.setAttribute 'hidden', ''
       searchResults.removeAttribute 'hidden'
-      lunrResults = searchIndex.search(query + "~1")
-      results = translateLunrResults(lunrResults)
-      renderSearchResults results
+  searchBoxElement.addEventListener 'input', 
+    debounce( () ->
+      query = searchBoxElement.value
+      if query.length > 0
+        results = esSearch(query) 
+        renderSearchResults results
+    300)
+
+
 
 # Table of Contents
 # =============================================================================
