@@ -31,7 +31,7 @@ deleteTempIfExists
 
 for filename in ${MARKDOWN_FILES[@]}; do
  	title="$(echo $filename | awk '{gsub(".md$",""); gsub("-", " "); for(i=1;i<=NF;i++){ $i=toupper(substr($i,1,1)) substr($i,2) }; print;}')"
- 	url="$(echo $filename | awk '{c=$0; sub(".md$","",c); printf "/%s.html" , c;}')"
+ 	url="$(echo $filename | awk '{c=$0; sub(".md$","",c); printf "%s.html" , c;}')"
  	escapedTitle=$(jsonEscape "$title")
  	content="$(cat $filename)"
  	escapedContent=$(jsonEscape "$content")
