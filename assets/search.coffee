@@ -281,15 +281,17 @@ createEsQuery = (queryStr) ->
   highlight.fields.content = {"fragment_size" : 120, "number_of_fragments" : 1, "pre_tags" : ["<strong>"], "post_tags" : ["</strong>"] }
 
   query = {}
-  query.simple_query_string= {}
-  query.simple_query_string.query = queryStr+"*"
-  query.simple_query_string.fields = ["title","content"]
+  query.match_phrase_prefix= {}
+  query.match_phrase_prefix.content = {}
+  query.match_phrase_prefix.content.query = queryStr
+  query.match_phrase_prefix.content.slop = 3
+  query.match_phrase_prefix.content.max_expansions = 10
 
   {"query" : query, "highlight" : highlight}
 
 # Call the API 
 esSearch = (query) -> 
-  console.log 'Executing debounced query: ' , query
+  #console.log 'Executing debounced query: ' , query
   req=new XMLHttpRequest()
   req.addEventListener 'readystatechange', -> 
     if req.readyState is 4 # ReadyState Complete  

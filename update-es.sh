@@ -43,10 +43,27 @@ echo '\nDelete index if it exists\n'
 curl -XDELETE "$BONSAI_URL/$BONSAI_INDEX"
 
 echo '\nCreate index\n'
-curl -XPUT "$BONSAI_URL/$BONSAI_INDEX"
+curl -XPUT "$BONSAI_URL/$BONSAI_INDEX" -H 'Content-Type: application/json' -d'
+{
+    "settings": {
+        "analysis": {
+            "analyzer": {
+                "lc_stem_analyzer": {
+                    "type":         "custom",
+                    "tokenizer":    "classic",
+                    "filter":       [ "lowercase", "en_stemmer" ]
+            }},
+            "filter" : {
+                "en_stemmer" : {
+                    "type" : "stemmer",
+                    "name" : "english"
+                }
+            }
+}}}
+'
 
 echo '\nAdd type to index\n'
-curl -XPUT "$BONSAI_URL/$BONSAI_INDEX/_mapping/$BONSAI_TYPE" -H 'Content-Type: application/json' -d '{"properties": {"title": {"type": "string"}, "url": {"type": "string"}, "content": {"type": "string", "term_vector" : "with_positions_offsets"} } } '
+curl -XPUT "$BONSAI_URL/$BONSAI_INDEX/_mapping/$BONSAI_TYPE" -H 'Content-Type: application/json' -d '{"properties": {"title": {"type": "string"}, "url": {"type": "string"}, "content": {"type": "string", "term_vector" : "with_positions_offsets", "analyzer":"lc_stem_analyzer"} } } '
 
 echo '\nBulk insert the markdown files\n'
 curl -XPOST "$BONSAI_URL/$BONSAI_INDEX/$BONSAI_TYPE/_bulk?pretty" --data-binary @"$TEMP"

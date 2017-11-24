@@ -64,13 +64,30 @@ done
 index_status=$( curl -w %{http_code} -s -i -o /dev/null "$BONSAI_URL/$BONSAI_INDEX")
 if [ "$index_status" == '404' ]; then
 	echo >&2 '\nCreate index\n'
-	curl -XPUT "$BONSAI_URL/$BONSAI_INDEX"
+	curl -XPUT "$BONSAI_URL/$BONSAI_INDEX" -H 'Content-Type: application/json' -d'
+	{
+	    "settings": {
+	        "analysis": {
+	            "analyzer": {
+	                "lc_stem_analyzer": {
+	                    "type":         "custom",
+	                    "tokenizer":    "classic",
+	                    "filter":       [ "lowercase", "en_stemmer" ]
+	            }},
+	            "filter" : {
+	                "en_stemmer" : {
+	                    "type" : "stemmer",
+	                    "name" : "english"
+	                }
+	            }
+	}}}
+	'
 fi
 
 mapping_status=$( curl -w %{http_code} -s -i -o /dev/null "$BONSAI_URL/$BONSAI_INDEX/_mapping/$BONSAI_TYPE")
 if [ "$mapping_status" == '404' ]; then
 	echo >&2 '\nAdd type to index\n'
-	curl -XPUT "$BONSAI_URL/$BONSAI_INDEX/_mapping/$BONSAI_TYPE" -H 'Content-Type: application/json' -d '{"properties": {"title": {"type": "string"}, "url": {"type": "string"}, "content": {"type": "string", "term_vector" : "with_positions_offsets"} } } '
+	curl -XPUT "$BONSAI_URL/$BONSAI_INDEX/_mapping/$BONSAI_TYPE" -H 'Content-Type: application/json' -d '{"properties": {"title": {"type": "string"}, "url": {"type": "string"}, "content": {"type": "string", "term_vector" : "with_positions_offsets", "analyzer":"lc_stem_analyzer"} } } '
 fi
 
 echo >&2 '\nUpdate in bulk\n'
