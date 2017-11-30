@@ -43,6 +43,9 @@ for ns in $name_status; do
 	fi
 done
 
+if [ ${#UPSERT[@]} -eq 0 ] && [ ${#DELETE[@]} -eq 0 ]; then
+	exit 0
+fi
 
 deleteTempIfExists
 
