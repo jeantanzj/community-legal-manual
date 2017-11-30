@@ -20,5 +20,7 @@ section_order:
   - Military Law
   - Alternative Dispute Resolution
   - The Traffic Court
-bonsai_url: https://first-cluster-5446942761.ap-southeast-2.bonsaisearch.net/probono/md/_search?pretty
-bonsai_credential: 4et5fzvqdw:5as4dekv3t
+environment: LOCAL
+search_endpoint_LOCAL: http://127.0.0.1:3000/search
+search_endpoint_DEV: https://community-legal-manual.herokuapp.com/search
+
