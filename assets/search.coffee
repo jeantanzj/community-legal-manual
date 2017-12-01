@@ -45,14 +45,15 @@ searchBoxElement.oninput = (event) ->
 
 {% capture endpoint %}
 {% if site.environment == "DEV" %} 
-{{ site.search_endpoint_DEV |  jsonify }} 
+{{ site.server_DEV |  jsonify }} 
 {% elsif site.environment == "LOCAL" %} 
-{{ site.search_endpoint_LOCAL |  jsonify }} 
+{{ site.server_LOCAL |  jsonify }} 
 {% else %} 
 'INVALID-ENVIRONMENT'
 {% endif %}
 {% endcapture %}
-endpoint = {{endpoint}}
+endpoint = {{endpoint}} 
+search_endpoint = endpoint + '/search'
 # Data Blob
 # =============================================================================
 # The main "blob" of site data constructed by liquid
@@ -220,7 +221,7 @@ searchIndexPromise = new Promise (resolve, reject) ->
       else
         resolve 'Connected to server'
 
-  req.open 'GET', endpoint, true
+  req.open 'GET', search_endpoint, true
   req.send 'nothing'
 
 # Search
@@ -336,7 +337,7 @@ esSearch = (query) ->
       else
         console.log 'Error retrieving search results ...'
 
-  req.open 'POST', endpoint, true
+  req.open 'POST', search_endpoint, true
   req.setRequestHeader 'Content-Type', 'application/json'
   req.send JSON.stringify {"query" : query }
 
