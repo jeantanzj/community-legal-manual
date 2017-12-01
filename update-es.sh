@@ -2,7 +2,7 @@
 
 #git push && ./update-es.sh
 #This script uploads all the md files to the Elastic Search server at $BONSAI_URL, index 'probono', type 'md'
-export BONSAI_URL=https://4et5fzvqdw:5as4dekv3t@first-cluster-5446942761.ap-southeast-2.bonsaisearch.net
+export BONSAI_URL=''
 export BONSAI_INDEX='probono'
 export BONSAI_TYPE='md'
 shopt -s nullglob
@@ -63,9 +63,9 @@ curl -XPUT "$BONSAI_URL/$BONSAI_INDEX" -H 'Content-Type: application/json' -d'
 '
 
 echo '\nAdd type to index\n'
-curl -XPUT "$BONSAI_URL/$BONSAI_INDEX/_mapping/$BONSAI_TYPE" -H 'Content-Type: application/json' -d '{"properties": {"title": {"type": "string"}, "url": {"type": "string"}, "content": {"type": "string", "term_vector" : "with_positions_offsets", "analyzer":"lc_stem_analyzer"} } } '
+curl -XPUT "$BONSAI_URL/$BONSAI_INDEX/_mapping/$BONSAI_TYPE" -H 'Content-Type: application/json' -d '{"properties": {"title": {"type": "text"}, "url": {"type": "text"}, "content": {"type": "text", "term_vector" : "with_positions_offsets", "analyzer":"lc_stem_analyzer"} } } '
 
 echo '\nBulk insert the markdown files\n'
-curl -XPOST "$BONSAI_URL/$BONSAI_INDEX/$BONSAI_TYPE/_bulk?pretty" --data-binary @"$TEMP"
+curl -XPOST "$BONSAI_URL/$BONSAI_INDEX/$BONSAI_TYPE/_bulk?pretty" --data-binary @"$TEMP" -H 'Content-Type: application/json'
 
 deleteTempIfExists
