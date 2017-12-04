@@ -2,6 +2,7 @@ const express = require('express');
 const http = require('http');
 const bodyParser = require('body-parser');
 const request = require('request');
+const path = require('path');
 var logger = require('winston');
 logger.level = process.env.LOG_LEVEL || 'info';
 var app_params = {logger:logger, request:request};
@@ -23,6 +24,7 @@ Object.values(ENV).forEach(function(val) {
 	}
 });
 
+var site = path.join(__dirname, '_site');
 var app = express();
 app.use(function(request, response, next) {
     response.header('Access-Control-Allow-Origin', "*");
@@ -32,13 +34,12 @@ app.use(function(request, response, next) {
 });	
 app.use(bodyParser.json()); // support json encoded bodies
 app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
+app.use(express.static(site));
+app.get('*', function(req,res) { res.sendFile('index.html', {root:site}); });
 
 http.createServer(app)
 	.listen(HTTP_PORT, function() { logger.info("Listening on port", {port: HTTP_PORT}); });
 
-app.get('/', function(req,res){
-	res.send('Endpoint: POST /search');
-});
 
 /*
 * Reroute search query to elastic search 
@@ -50,7 +51,7 @@ app.post('/search', function(req, res){
         .then((retVal) => res.send(retVal))
         .catch( (e)=> {
             var msg;
-            msg = 'Error retrieving search results';
+            msg = 'Error retrieving search results...';
             logger.debug(msg, e);
             res.send({error:msg});
         });

@@ -1,0 +1,27 @@
+title: Community Legal Clinic Manual, Law Society of Singapore
+theme: minima
+plugins:
+  - jekyll-seo-tag
+  - jekyll-coffeescript
+  - kramdown
+exclude: ['Rakefile','README','*.tmp','*.sh','./*.js','Gemfile','Gemfile.lock','package.json','package-lock.json','config.ru','vendor', 'Procfile', 'node_modules']
+section_order:
+  - Community Legal Clinic Manual
+  - Clinic Management
+  - Civil Claims (General)
+  - Family Law
+  - Bankruptcy and Insolvency
+  - Criminal Law and Procedure
+  - Property
+  - Intellectual Property
+  - Wills, Intestacy, Probate and Administration
+  - Data Protection Law
+  - Advance Medical Directive
+  - Juvenile Issues
+  - Military Law
+  - Alternative Dispute Resolution
+  - The Traffic Court
+environment: LOCAL
+server_LOCAL: http://127.0.0.1:3000
+server_DEV: https://community-legal-manual.herokuapp.com
+
