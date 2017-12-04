@@ -1,0 +1,14 @@
+{
+  "name": "community-legal-manual-app",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "body-parser": "^1.18.2",
+    "express": "^4.16.2",
+    "request": "^2.83.0",
+    "winston": "^2.4.0",
+    "less": "^2.7.3"
+  }
+}

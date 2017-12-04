@@ -1,0 +1,41 @@
+set up jekyll and heroku 
+```
+export APP_NAME=community-legal-manual
+cd $APP_NAME
+gem install jekyll bundler
+jekyll new . --force 
+```
+
+then create your node js app. Edit the `Gemfile` and plugins section of `_config.yml` to include necessary dependencies. To build and deploy on heroku requires two build packs.
+```
+heroku buildpacks -a community-legal-manual
+
+=== community-legal-manual Buildpack URLs
+1. heroku/ruby
+2. heroku/nodejs
+```
+
+config.ru
+```
+require 'rack/jekyll'
+require 'yaml'
+run Rack::Jekyll.new
+```
+
+Rakefile
+```
+namespace :assets do
+  task :precompile do
+    puts `bundle exec jekyll build`
+  end
+end
+```
+
+
+On heroku dashboard, select Github integration, so you can push into a github repo that fires its push webhook which will then be picked up by Heroku. 
+
+Starting the app
+```
+heroku ps:scale web=1
+heroku open $APP_NAME
+```
