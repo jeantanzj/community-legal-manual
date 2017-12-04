@@ -17,15 +17,15 @@ var ENV = {'BONSAI_URL': process.env.BONSAI_URL || '' ,
 	'BONSAI_INDEX': process.env.BONSAI_INDEX || '',
 	'BONSAI_DOCTYPE': process.env.BONSAI_DOCTYPE || ''};
 
-Object.values(ENV).forEach(function(val) { 
-	if(val === ''){
-		logger.error('One or more environment variables for connecting to the elastic search database is missing',  ENV);
-		process.exit(1);
-	}
-});
+for (let prop of Object.keys(ENV)){
+    if(ENV[prop] === ''){
+        logger.error('One or more environment variables for connecting to the elastic search database is missing',  ENV);
+        process.exit(1);
+    }
+}
 
 var site = path.join(__dirname, '_site');
-var app = express();
+var app = express();    
 app.use(function(request, response, next) {
     response.header('Access-Control-Allow-Origin', "*");
     response.header('Access-Control-Allow-Methods', 'GET,POST');
