@@ -1,9 +1,16 @@
 title: Community Legal Clinic Manual, Law Society of Singapore
 theme: minima
 plugins:
-  - jekyll-seo-tag
-  - jekyll-coffeescript
   - kramdown
+  - jekyll-coffeescript
+  - jekyll-seo-tag
+  - jekyll-gist
+  - jekyll-paginate
+  - jekyll-relative-links
+  - jekyll-optional-front-matter
+  - jekyll-readme-index
+  - jekyll-default-layout
+  - jekyll-titles-from-headings
 exclude: ['Rakefile','README','*.tmp','*.sh','./*.js','Gemfile','Gemfile.lock','package.json','package-lock.json','config.ru','vendor', 'Procfile', 'node_modules']
 section_order:
   - Community Legal Clinic Manual
