@@ -292,18 +292,27 @@ renderSearchResults = (searchResults) ->
 renderSearchResultsFromServer = (searchResults) ->
   container = document.getElementsByClassName('search-results')[0]
   container.innerHTML = ''
-  searchResults.hits.hits.forEach (result) ->
-    element = document.createElement('a')
-    element.classList.add 'nav-link'
-    element.setAttribute 'href', result._source.url
-    element.innerHTML = result._source.title
-    description = document.createElement('p')
-    description.innerHTML = "..." + result.highlight.content.join "..."
-    description.innerHTML += "..."
-    element.appendChild description
-    container.appendChild element
+  if typeof searchResults.hits == 'undefined' 
+    error = document.createElement('p')
+    error.innerHTML = searchResults
+    container.appendChild error
+  else if searchResults.hits.hits.length == 0
+    error = document.createElement('p')
+    error.innerHTML = 'Results matching your query were not found' 
+    container.appendChild error
+  else
+    searchResults.hits.hits.forEach (result) ->
+      element = document.createElement('a')
+      element.classList.add 'nav-link'
+      element.setAttribute 'href', result._source.url
+      element.innerHTML = result._source.title
+      description = document.createElement('p')
+      description.innerHTML = "..." + result.highlight.content.join "..."
+      description.innerHTML += "..."
+      element.appendChild description
+      container.appendChild element
+      return
     return
-  return
 
 debounce = (func, wait, immediate) ->
   timeout = null
@@ -333,9 +342,9 @@ esSearch = (query) ->
         if typeof result.error == 'undefined'
           renderSearchResultsFromServer result.body
         else
-          console.log JSON.stringify result.error
+          renderSearchResultsFromServer result.error
       else
-        console.log 'Error retrieving search results ...'
+        renderSearchResultsFromServer  'Error retrieving search results ...'
 
   req.open 'POST', search_endpoint, true
   req.setRequestHeader 'Content-Type', 'application/json'
