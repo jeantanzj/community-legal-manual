@@ -25,7 +25,7 @@ module.exports = function(app_params) {
               resolve(retVal);
             }
             else{
-              retVal.response = response;
+              retVal.body = body;
               retVal.query = esQuery;
               reject(retVal);
             }

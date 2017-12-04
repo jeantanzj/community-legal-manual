@@ -51,7 +51,7 @@ app.post('/search', function(req, res){
         .catch( (e)=> {
             var msg;
             msg = 'Error retrieving search results';
-            logger.debug(msg, retVal);
+            logger.debug(msg, e);
             res.send({error:msg});
         });
 });
