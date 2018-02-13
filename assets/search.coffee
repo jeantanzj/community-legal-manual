@@ -43,7 +43,17 @@ searchBoxElement.oninput = (event) ->
   else
     siteSearchElement.classList.remove "filled"
 
-
+{% capture endpoint %}
+{% if site.environment == "DEV" %} 
+{{ site.server_DEV |  jsonify }} 
+{% elsif site.environment == "LOCAL" %} 
+{{ site.server_LOCAL |  jsonify }} 
+{% else %} 
+'INVALID-ENVIRONMENT'
+{% endif %}
+{% endcapture %}
+endpoint = {{endpoint}} 
+search_endpoint = endpoint + '/search'
 # Data Blob
 # =============================================================================
 # The main "blob" of site data constructed by liquid
@@ -190,8 +200,29 @@ serializableSiteSections = Object.values(sectionIndex).map (section) ->
   delete serializableSection.component
   delete serializableSection.subsections
   return serializableSection
+
+
+searchOnServer = true
 searchIndexPromise = new Promise (resolve, reject) ->
-  resolve 'just resolve it for now'
+  req=new XMLHttpRequest()
+  req.timeout=1000
+  req.addEventListener 'readystatechange', -> 
+    if req.readyState is 4 # ReadyState Complete  
+      successResultCodes=[200,304]
+      if req.status not in successResultCodes 
+        searchOnServer = false
+        worker = new Worker("{{ '/assets/worker.js' | relative_url }}")
+        worker.onmessage = (event) ->
+          worker.terminate()
+          resolve lunr.Index.load event.data
+        worker.onerror = (error) ->
+          Promise.reject(error)
+        worker.postMessage serializableSiteSections
+      else
+        resolve 'Connected to server'
+
+  req.open 'GET', search_endpoint, true
+  req.send 'nothing'
 
 # Search
 # =============================================================================
@@ -246,18 +277,42 @@ translateLunrResults = (lunrResults) ->
 renderSearchResults = (searchResults) ->
   container = document.getElementsByClassName('search-results')[0]
   container.innerHTML = ''
-  searchResults.hits.hits.forEach (result) ->
+  searchResults.forEach (result) ->
     element = document.createElement('a')
     element.classList.add 'nav-link'
-    element.setAttribute 'href', result._source.url
-    element.innerHTML = result._source.title
+    element.setAttribute 'href', result.url
+    element.innerHTML = result.title
     description = document.createElement('p')
-    description.innerHTML = "..." + result.highlight.content.join "..."
-    description.innerHTML += "..."
+    description.innerHTML = result.description
     element.appendChild description
     container.appendChild element
     return
   return
+
+renderSearchResultsFromServer = (searchResults) ->
+  container = document.getElementsByClassName('search-results')[0]
+  container.innerHTML = ''
+  if typeof searchResults.hits == 'undefined' 
+    error = document.createElement('p')
+    error.innerHTML = searchResults
+    container.appendChild error
+  else if searchResults.hits.hits.length == 0
+    error = document.createElement('p')
+    error.innerHTML = 'Results matching your query were not found' 
+    container.appendChild error
+  else
+    searchResults.hits.hits.forEach (result) ->
+      element = document.createElement('a')
+      element.classList.add 'nav-link'
+      element.setAttribute 'href', result._source.url
+      element.innerHTML = result._source.title
+      description = document.createElement('p')
+      description.innerHTML = "..." + result.highlight.content.join "..."
+      description.innerHTML += "..."
+      element.appendChild description
+      container.appendChild element
+      return
+    return
 
 debounce = (func, wait, immediate) ->
   timeout = null
@@ -274,43 +329,34 @@ debounce = (func, wait, immediate) ->
     if callImmediately
       func.apply(context, args)
 
-createEsQuery = (queryStr) ->
-  highlight = {}
-  highlight.require_field_match = false
-  highlight.fields = {}
-  highlight.fields.content = {"fragment_size" : 120, "number_of_fragments" : 1, "pre_tags" : ["<strong>"], "post_tags" : ["</strong>"] }
-
-  query = {}
-  query.match_phrase_prefix= {}
-  query.match_phrase_prefix.content = {}
-  query.match_phrase_prefix.content.query = queryStr
-  query.match_phrase_prefix.content.slop = 3
-  query.match_phrase_prefix.content.max_expansions = 10
-
-  {"query" : query, "highlight" : highlight}
 
 # Call the API 
 esSearch = (query) -> 
-  #console.log 'Executing debounced query: ' , query
+  console.log 'Executing debounced query: ' , query
   req=new XMLHttpRequest()
   req.addEventListener 'readystatechange', -> 
     if req.readyState is 4 # ReadyState Complete  
       successResultCodes=[200,304]
       if req.status in successResultCodes
         result = JSON.parse req.responseText
-        renderSearchResults result
+        if typeof result.error == 'undefined'
+          renderSearchResultsFromServer result.body
+        else
+          renderSearchResultsFromServer result.error
       else
-        console.log 'Error retrieving search results ...'
+        renderSearchResultsFromServer  'Error retrieving search results ...'
 
-  auth = btoa {{ site.bonsai_credential | jsonify }}
-  esQuery = createEsQuery query
-  req.open 'POST', {{ site.bonsai_url |  jsonify }}, true
+  req.open 'POST', search_endpoint, true
   req.setRequestHeader 'Content-Type', 'application/json'
-  req.setRequestHeader 'Authorization', 'Basic ' + auth
-  req.send JSON.stringify esQuery
-  
+  req.send JSON.stringify {"query" : query }
+
+lunrSearch = (searchIndex, query) ->
+  lunrResults = searchIndex.search(query + "~1")
+  results = translateLunrResults(lunrResults)
+  renderSearchResults results  
+
 # Enable the searchbox once the index is built
-searchIndexPromise.then () ->
+searchIndexPromise.then (searchIndex) ->
   searchBoxElement.removeAttribute "disabled"
   searchBoxElement.setAttribute "placeholder", "Type here to search..."
   searchBoxElement.addEventListener 'input', (event) ->
@@ -327,8 +373,11 @@ searchIndexPromise.then () ->
     debounce( () ->
       query = searchBoxElement.value
       if query.length > 0
-        results = esSearch(query) 
-    200)
+        if searchOnServer
+          esSearch(query)
+        else
+          lunrSearch(searchIndex, query)
+    200, !searchOnServer)
 
 
 
